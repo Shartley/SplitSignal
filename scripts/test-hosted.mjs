@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+const base='https://split-signal-crew-escape.tealelk64.chatgpt.site';
+const a=crypto.randomUUID(),b=crypto.randomUUID();let code;
+async function call(action,id,extra={}){const res=await fetch(base+'/api/game',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,id,code,...extra})});const data=await res.json();assert.equal(res.status,200,JSON.stringify(data));return data;}
+let r=await call('create',a,{name:'Test Captain'});code=r.code;
+await call('join',b,{name:'Test Engineer'});
+r=await call('start',a);
+const eng=await call('state',b);
+const symbols=['△','○','◇','□','☆','⬡'];
+const seq=r.clue.split(': ')[1].split('  →  ');
+const nums=seq.map(s=>symbols.indexOf(s)+1);
+assert.ok(nums.every(n=>n>0));
+assert.notEqual(r.clue,eng.clue);
+r=await call('answer',a,{answer:nums.map(n=>n+1).join('')});assert.equal(r.stage,2);
+r=await call('answer',b,{answer:[nums[2]+2,nums[0]+2,nums[1]+2].join('')});assert.equal(r.stage,3);
+r=await call('answer',a,{answer:String(nums.reduce((x,y)=>x+y,0))});assert.equal(r.stage,4);
+assert.equal((await call('ready',a)).stage,4);
+assert.equal((await call('ready',b)).stage,5);
+assert.equal((await call('state',a)).stage,5);
+console.log('PASS: PUBLIC HOSTED MULTIPLAYER — create, join, private roles, all 3 puzzles, shared progress, unanimous escape.');
